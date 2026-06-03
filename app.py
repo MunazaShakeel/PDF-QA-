@@ -1,4 +1,4 @@
-# app.py - ULTIMATE PDF QA SYSTEM
+# app.py - FIXED ERROR-FREE VERSION (Only Flan-T5 Small)
 import streamlit as st
 from PyPDF2 import PdfReader
 from sentence_transformers import SentenceTransformer
@@ -37,26 +37,16 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Title with animation effect
+# Title
 st.title("📚 Smart PDF Question Answering System")
-st.markdown("*Powered by Google Flan-T5 & Sentence Transformers*")
+st.markdown("*Powered by Google Flan-T5-Small & Sentence Transformers*")
 
 # Sidebar for settings
 with st.sidebar:
     st.header("⚙️ Settings")
     
-    # Model selection
-    model_size = st.selectbox(
-        "Model Size (Quality vs Speed)",
-        ["small (fast)", "base (balanced)", "large (best quality)"]
-    )
-    
-    model_map = {
-        "small (fast)": "google/flan-t5-small",
-        "base (balanced)": "google/flan-t5-base",
-        "large (best quality)": "google/flan-t5-large"
-    }
-    selected_model = model_map[model_size]
+    # Fixed model - only small (no options to avoid errors)
+    st.info("🤖 Model: **Flan-T5-Small** (Fast & Reliable)")
     
     # Chunk size
     chunk_size = st.slider("Context Chunk Size", 200, 1000, 500)
@@ -80,12 +70,15 @@ if 'chat_history' not in st.session_state:
 if 'summary' not in st.session_state:
     st.session_state.summary = None
 
+# Fixed model name - only small
+MODEL_NAME = "google/flan-t5-small"
+
 @st.cache_resource
-def load_models(model_name):
+def load_models():
     with st.spinner("🚀 Loading AI models (first time may take 1-2 minutes)..."):
         embedder = SentenceTransformer('all-MiniLM-L6-v2')
-        tokenizer = AutoTokenizer.from_pretrained(model_name)
-        model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
+        tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+        model = AutoModelForSeq2SeqLM.from_pretrained(MODEL_NAME)
         return embedder, tokenizer, model
 
 def clean_text(text):
@@ -177,7 +170,7 @@ if uploaded_file:
         chunks = smart_chunking(text, chunk_size)
         
         # Load models
-        embedder, tokenizer, model = load_models(selected_model)
+        embedder, tokenizer, model = load_models()
         
         # Create embeddings
         embeddings = embedder.encode(chunks)
@@ -257,21 +250,20 @@ if uploaded_file:
                     context = " ".join(contexts)
                     
                     # Generate answer
-                    prompt = f"""You are a helpful assistant. Answer the question based ONLY on the provided context.
+                    prompt = f"""Answer the question based on the context.
 
 Context: {context}
 
 Question: {question}
 
-Provide a clear, accurate answer:"""
+Answer:"""
                     
                     inputs = tokenizer(prompt, return_tensors="pt", max_length=768, truncation=True)
                     outputs = model.generate(
                         inputs.input_ids, 
                         max_new_tokens=200, 
                         temperature=temperature,
-                        do_sample=temperature > 0,
-                        top_p=0.9
+                        do_sample=temperature > 0
                     )
                     answer = tokenizer.decode(outputs[0], skip_special_tokens=True)
                     
@@ -290,8 +282,8 @@ Provide a clear, accurate answer:"""
                     st.markdown("### ✅ Answer")
                     st.markdown(f'<div class="answer-box">{answer}</div>', unsafe_allow_html=True)
                     
-                    # Show confidence and sources
-                    with st.expander("📖 Source Text & Confidence"):
+                    # Show sources
+                    with st.expander("📖 Source Text"):
                         st.caption(f"Retrieved {len(indices[0])} relevant sections")
                         for i, ctx in enumerate(contexts):
                             st.text_area(f"Source {i+1}", ctx[:300], height=100)
@@ -369,6 +361,6 @@ else:
         
         **Tips:**
         - For best results, use PDFs with selectable text (not scanned)
-        - Larger models give better answers but take longer
         - Adjust chunk size for better context
+        - Small PDFs work best (under 10MB)
         """)
