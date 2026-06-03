@@ -1,4 +1,9 @@
 # app.py - FIXED ERROR-FREE VERSION (Only Flan-T5 Small)
+# app.py - pehle line mein yeh add karo
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+# baaki code same rakho
 import streamlit as st
 from PyPDF2 import PdfReader
 from sentence_transformers import SentenceTransformer
