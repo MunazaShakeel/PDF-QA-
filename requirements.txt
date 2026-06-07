@@ -2,4 +2,6 @@ streamlit
 PyPDF2
 sentence-transformers
 transformers
+faiss-cpu
+torch
 numpy
